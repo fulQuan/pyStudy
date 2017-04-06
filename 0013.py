@@ -29,20 +29,16 @@ def get_imgs(url):
 def download_imgs(imgs):
 	# imgs is a list	
 	cur_path = os.path.abspath('.')
-
 	save_path = cur_path + '/imgs/' 
-
 	isExists = os.path.exists(save_path)
 
 	if not isExists:
 		os.makedirs(save_path)
-	
 	for img in imgs:
 		filename = save_path + str( imgs.index(img)+1 ) + '.jpg'
 		#print(filename)
 		urlretrieve(img,filename)
 		#print(img)
-
 
 with open('cookie') as f:
 	content = f.read()
