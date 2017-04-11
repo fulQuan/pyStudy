@@ -19,3 +19,4 @@ deploy_key_rsa
 # my infos
 
 cookie
+config.py

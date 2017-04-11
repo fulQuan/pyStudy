@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 import requests
 import re
@@ -7,15 +8,13 @@ import os
 import time
 import threading
 
-config = {
-	# 'dirName':'半藏森林',
-	# 'owner_uid':2331498495,	
-	'dirName':'徐小溢',
+config = {	
+	'dirName':'',
 	#'owner_uid':3967022310,
 	'owner_uid':'',
-	'nickname':u'徐小溢',
+	'nickname':u'彦祖的妹妹',
 	'start_page':1,
-	'end_page':3,
+	'end_page':5,
 }
 
 def get_cookie(content):
@@ -38,10 +37,11 @@ def makeSavePath(dirName):
 def download_photos(imgs,page_num):
 	# imgs is a list		
 	global save_path
-	for img in imgs:		
-		filename = save_path + str(page_num) + '_' + str( imgs.index(img)+1 ) + '.jpg'		
-		#urlretrieve(img,filename)
-		r = requests.get( img , headers=headers2,stream=True )		
+	for img in imgs:				
+		imgUrl = 'http://ww4.sinaimg.cn/mw1024/'+img['pic_name']
+		imgTime = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime( int( img['timestamp'] ) ))
+		filename = save_path + imgTime + '.jpg'		
+		r = requests.get( imgUrl , headers=headers2,stream=True )		
 		if r.status_code == 200:
 			with open(filename,'wb') as f:
 				f.write(r.content)				
@@ -59,14 +59,15 @@ def getPhotoList( cookies , owner_uid , album_id , page_num):
 
 	photoData = photoArr['data'] 	
 	photoList = photoData['photo_list']	
-	imgList = []
-	for photo in photoList:
-		#print(photo['pic_name'])
-		if photo['pic_name'] == '':
-			continue
-		pic_name = 'http://ww4.sinaimg.cn/mw1024/'+photo['pic_name']
-		imgList.append(pic_name)
-	return imgList		
+	return photoList
+	# imgList = []
+	# for photo in photoList:
+	# 	#print(photo['pic_name'])		
+	# 	if photo['pic_name'] == '':
+	# 		continue
+	# 	pic_name = 'http://ww4.sinaimg.cn/mw1024/'+photo['pic_name']
+	# 	imgList.append(pic_name)
+	# return imgList		
 
 def getAlbumIds( owner_uid , page_num=1 ):
 	album_lists = [] 
@@ -90,6 +91,9 @@ def getUidNick(nickname):
 	payload = {"nickname":nickname}	
 	r = requests.post(url,data=payload,cookies=cookies,headers=headers_open)			
 	uidJson = r.text	
+	if 'File not found' in uidJson:
+		print('找不到用户error，请重新输入用户名')
+		exit()	
 	uidArr = json.loads(uidJson)
 	uid = uidArr['data']
 	if uid:
@@ -117,8 +121,7 @@ if __name__ == '__main__':
 	headers_open = {    
 	    'Host':'open.weibo.com',
 	    "Referer": "http://open.weibo.com/widget/followbutton.php",
-	    'Origin':'http://open.weibo.com',
-	    'Connection': 'keep-alive',
+	    'Origin':'http://open.weibo.com',	    
 	    'User-Agent': agent
 	}	
 
@@ -126,19 +129,10 @@ if __name__ == '__main__':
 		content = f.read()	
 	cookies = dict( l.strip().split('=',1) for l in content.split(';') ) 
 
-	# with open('cookie_open') as f:
-	# 	content_open = f.read()
-	# cookie_open = dict( l.strip().split('=',1) for l in content_open.split(';') ) 	
-
-	
-
-	save_path = makeSavePath(config['dirName'])
-
-	#徐娇
-	# owner_uid = 1078007814
-	# album_id =3818092304731046
-
-	#半藏森林
+	if config['dirName'].strip() == '':
+		config['dirName'] = config['nickname']
+		print('未指定保存文件夹，直接用昵称新建文件夹:/'+config['dirName'])
+	save_path = makeSavePath(config['dirName'])	
 	nickname = config['nickname']
 	owner_uid = config['owner_uid']
 	if owner_uid:
