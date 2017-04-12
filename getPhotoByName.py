@@ -7,15 +7,7 @@ import json
 import os
 import time
 import threading
-
-config = {	
-	'dirName':'',
-	#'owner_uid':3967022310,
-	'owner_uid':'',
-	'nickname':u'彦祖的妹妹',
-	'start_page':1,
-	'end_page':5,
-}
+from argparse import ArgumentParser
 
 def get_cookie(content):
 	for line in content.split(';'):
@@ -102,8 +94,34 @@ def getUidNick(nickname):
 		print('找不到用户:'+nickname)
 		return False
 
+def parse_args():
+	parser = ArgumentParser(description="Input the nickname on Weibo to get Album photos")
+	parser.add_argument('-n','--nickname',dest="nickname",help="nickname on Weibo",required=False)
+	parser.add_argument('-s','--startpage',dest="startpage",help="start page of Album",required=False,type=int)
+	parser.add_argument('-e','--endpage',dest="endpage",help="max page of Album",required=False,type=int)
+	return parser.parse_args()
+
 
 if __name__ == '__main__':	
+
+	config = {	
+		'dirName':'',
+		#'owner_uid':3967022310,
+		'owner_uid':'',
+		'nickname':u'',
+		'start_page':1,
+		'end_page':10,
+	}
+
+
+	args = parse_args()
+	nickname = args.nickname if args.nickname else config['nickname']
+	if nickname.strip() == '':
+		print('微博昵称不能为空，必须-n 昵称指定或者源码中指定')
+		exit()
+
+	config['start_page'] = args.startpage if args.startpage else config['start_page']
+	config['end_page'] = args.endpage if args.endpage else config['end_page']	
 
 	agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
 	headers = {    
@@ -130,15 +148,11 @@ if __name__ == '__main__':
 	cookies = dict( l.strip().split('=',1) for l in content.split(';') ) 
 
 	if config['dirName'].strip() == '':
-		config['dirName'] = config['nickname']
+		config['dirName'] = str(nickname)		
 		print('未指定保存文件夹，直接用昵称新建文件夹:/'+config['dirName'])
-	save_path = makeSavePath(config['dirName'])	
-	nickname = config['nickname']
-	owner_uid = config['owner_uid']
-	if owner_uid:
-		owner_uid = config['owner_uid']	
-	else:
-		owner_uid = getUidNick(nickname)
+	save_path = makeSavePath(config['dirName'])
+
+	owner_uid = config['owner_uid'] if config['owner_uid'] else getUidNick(nickname)
 
 	albumListData = getAlbumIds( owner_uid )
 	start_page = config['start_page']
